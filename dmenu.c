@@ -131,10 +131,10 @@ calcoffsets(void)
 		n = mw - (promptw + inputw + TEXTW("<") + TEXTW(">"));
 	/* calculate which items will begin the next page and previous page */
 	for (i = 0, next = curr; next; next = next->right)
-		if ((i += (lines > 0) ? bh : MIN(TEXTW(next->text), n)) > n)
+		if ((i += (lines > 0) ? bh : MIN((int)TEXTW(next->text), n)) > n)
 			break;
 	for (i = 0, prev = curr; prev && prev->left; prev = prev->left)
-		if ((i += (lines > 0) ? bh : MIN(TEXTW(prev->left->text), n)) > n)
+		if ((i += (lines > 0) ? bh : MIN((int)TEXTW(prev->left->text), n)) > n)
 			break;
 }
 
@@ -178,7 +178,7 @@ drawitem(struct item *item, int x, int y, int w)
 static void
 drawmenu(void)
 {
-	unsigned int curpos;
+	int curpos;
 	struct item *item;
 	int x = 0, y = 0, w;
  char *censort;
@@ -594,7 +594,7 @@ buttonpress(XEvent *e)
 	 *       add that to the input width */
 	if (ev->button == Button1 &&
 	   ((lines <= 0 && ev->x >= 0 && ev->x <= x + w +
-	   ((!prev || !curr->left) ? TEXTW("<") : 0)) ||
+	   ((!prev || !curr->left) ? (int)TEXTW("<") : 0)) ||
 	   (lines > 0 && ev->y >= y && ev->y <= y + h))) {
 		insert(NULL, -cursor);
 		drawmenu();
@@ -723,7 +723,7 @@ readstdin(void)
 			die("cannot strdup %u bytes:", strlen(buf) + 1);
 		items[i].out = 0;
 		drw_font_getexts(drw->fonts, buf, strlen(buf), &tmpmax, NULL);
-		if (tmpmax > inputw) {
+		if (tmpmax > (unsigned int)inputw) {
 			inputw = tmpmax;
 			imax = i;
 		}
@@ -869,7 +869,7 @@ setup(void)
 	if (embed) {
 		XSelectInput(dpy, parentwin, FocusChangeMask | SubstructureNotifyMask);
 		if (XQueryTree(dpy, parentwin, &dw, &w, &dws, &du) && dws) {
-			for (i = 0; i < du && dws[i] != win; ++i)
+			for (i = 0; (unsigned int)i < du && dws[i] != win; ++i)
 				XSelectInput(dpy, dws[i], FocusChangeMask);
 			XFree(dws);
 		}

@@ -246,8 +246,8 @@ drw_text(Drw *drw, int x, int y, unsigned int w, unsigned int h, unsigned int lp
 	unsigned int ew;
 	XftDraw *d = NULL;
 	Fnt *usedfont, *curfont, *nextfont;
-	size_t i, len;
-	int utf8strlen, utf8charlen, render = x || y || w || h;
+	size_t i, len, utf8strlen;
+	int utf8charlen, render = x || y || w || h;
 	long utf8codepoint = 0;
 	const char *utf8str;
 	FcCharSet *fccharset;
