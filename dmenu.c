@@ -1,5 +1,7 @@
 /* See LICENSE file for copyright and license details. */
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
 #include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -333,6 +335,18 @@ match(void)
 	}
 	curr = sel = matches;
 	calcoffsets();
+}
+
+static void
+preselect(void)
+{
+	unsigned int i;
+
+	for (i = 0; i < preselected && sel && sel->right; i++)
+		if ((sel = sel->right) == next) {
+			curr = next;
+			calcoffsets();
+		}
 }
 
 static void
@@ -860,6 +874,7 @@ setup(void)
 	promptw = (prompt && *prompt) ? TEXTW(prompt) - lrpad / 4 : 0;
 	inputw = MIN(inputw, mw/3);
 	match();
+	preselect();
 
 	/* create menu window */
 	swa.override_redirect = True;
@@ -898,9 +913,28 @@ setup(void)
 static void
 usage(void)
 {
-	fputs("usage: dmenu [-bFfiPrv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
+	fputs("usage: dmenu [-bFfiPrv] [-l lines] [-n number] [-p prompt] [-fn font] [-m monitor]\n"
 	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]\n", stderr);
 	exit(1);
+}
+
+static unsigned int
+parsepreselect(const char *arg)
+{
+	const char *p;
+	char *end;
+	unsigned long value;
+
+	if (!arg || !*arg)
+		usage();
+	for (p = arg; *p; p++)
+		if (!isdigit((unsigned char)*p))
+			usage();
+	errno = 0;
+	value = strtoul(arg, &end, 10);
+	if (errno || *end || value > UINT_MAX)
+		usage();
+	return (unsigned int)value;
 }
 
 void
@@ -975,6 +1009,8 @@ main(int argc, char *argv[])
 		/* these options take one argument */
 		else if (!strcmp(argv[i], "-l"))   /* number of lines in vertical list */
 			lines = atoi(argv[++i]);
+		else if (!strcmp(argv[i], "-n"))   /* preselected item */
+			preselected = parsepreselect(argv[++i]);
 		else if (!strcmp(argv[i], "-m"))
 			mon = atoi(argv[++i]);
 		else if (!strcmp(argv[i], "-p"))   /* adds prompt to left of input field */

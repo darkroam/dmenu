@@ -33,3 +33,6 @@ static unsigned int lines      = 0;
  */
 static const char worddelimiters[] = " ";
 
+/* -n option; preselected item starting from 0 */
+static unsigned int preselected = 0;
+
