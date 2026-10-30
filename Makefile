@@ -28,6 +28,12 @@ dmenu: dmenu.o drw.o util.o
 stest: stest.o
 	$(CC) -o $@ stest.o $(LDFLAGS)
 
+test: dmenu
+	@output=$$(./dmenu -v 2>&1); status=$$?; \
+	if test $$status -ne 0 || test "$$output" != "dmenu-$(VERSION)"; then \
+		printf '%s\n' "$$output" >&2; exit 1; \
+	fi
+
 clean:
 	rm -f dmenu stest $(OBJ) dmenu-$(VERSION).tar.gz *.rej *.orig
 
@@ -61,4 +67,4 @@ uninstall:
 		$(DESTDIR)$(MANPREFIX)/man1/dmenu.1\
 		$(DESTDIR)$(MANPREFIX)/man1/stest.1
 
-.PHONY: all options clean dist install uninstall
+.PHONY: all options clean dist install uninstall test
