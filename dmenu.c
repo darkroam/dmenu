@@ -67,6 +67,19 @@ static Clr *scheme[SchemeLast];
 static int (*fstrncmp)(const char *, const char *, size_t) = strncmp;
 static char *(*fstrstr)(const char *, const char *) = strstr;
 
+static int
+fuzzystrmatch(const char *s, const char *sub)
+{
+	while (*sub) {
+		while (*s && fstrncmp(s, sub, 1))
+			s++;
+		if (!*s)
+			return 0;
+		s++;
+		sub++;
+	}
+	return 1;
+}
 
 static void
 xinitvisual()
@@ -287,7 +300,10 @@ match(void)
 	textsize = strlen(text) + 1;
 	for (item = items; item && item->text; item++) {
 		for (i = 0; i < tokc; i++)
-			if (!fstrstr(item->text, tokv[i]))
+			if (fuzzy) {
+				if (!fuzzystrmatch(item->text, tokv[i]))
+					break;
+			} else if (!fstrstr(item->text, tokv[i]))
 				break;
 		if (i != tokc) /* not all tokens match */
 			continue;
@@ -882,7 +898,7 @@ setup(void)
 static void
 usage(void)
 {
-	fputs("usage: dmenu [-bfiPrv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
+	fputs("usage: dmenu [-bFfiPrv] [-l lines] [-p prompt] [-fn font] [-m monitor]\n"
 	      "             [-nb color] [-nf color] [-sb color] [-sf color] [-w windowid]\n", stderr);
 	exit(1);
 }
@@ -943,6 +959,8 @@ main(int argc, char *argv[])
 		/* these options take no arguments */
 		if (!strcmp(argv[i], "-b")) /* appears at the bottom of the screen */
 			topbar = 0;
+		else if (!strcmp(argv[i], "-F"))   /* toggles fuzzy matching */
+			fuzzy = !fuzzy;
 		else if (!strcmp(argv[i], "-f"))   /* grabs keyboard before reading stdin */
 			fast = 1;
 		else if (!strcmp(argv[i], "-i")) { /* case-insensitive item matching */
